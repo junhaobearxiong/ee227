@@ -83,7 +83,7 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
             model = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
             alphas[i, j] = model.alpha_
-            #
+            
             # evaluating on test set
             pred = model.predict(X_test)
             y_mse[i, j] = np.sum(np.square(y_test - pred))
