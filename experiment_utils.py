@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Lasso, LassoCV
+from sklearn.linear_model import Lasso, LassoCV, LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 from scipy.stats import pearsonr
@@ -48,10 +48,11 @@ def poelwijk_construct_Xy():
     return X, y
 
 
-def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, num_replicates=1):
+def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, num_replicates=1):
     """
     num_replicates: number of replicates of model to train on a given number of samples
     """
+    print('{} for max number of samples: {}, number of replicates: {}'.format(model_name, num_samples_arr.max(), num_replicates))
     beta = X @ y # true WHT
     # metrics to return
     y_mse = np.zeros((num_replicates, num_samples_arr.size))
@@ -60,31 +61,28 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
     beta_mse = np.zeros((num_replicates, num_samples_arr.size))
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     alphas = np.zeros((num_replicates, num_samples_arr.size))
+    alphas_list = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
 
     for i in range(num_replicates):
         print('replicate: {}'.format(i+1))
         # each replicate has an independent train test split
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
+        # select alpha using the whole training set
+        model = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
+        alphas[i, j] = model.alpha_
 
         for j, n in enumerate(num_samples_arr):
-            # using 10 independent samples of size n to select alpha independent of sampling for actual training
-            ''' 
-            if alpha is None:
-                alpha = determine_alpha(X_train, y_train, n, 10)
-                print('not here')
-            alphas[i, j] = alpha
-            # randomly subsample n samples from training set for actual training
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-            model = Lasso(alpha=alpha)
-            model.fit(X_train[samples_idx, :], y_train[samples_idx])
-            '''
-            alphas_list = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
-            samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-            model = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
-            alphas[i, j] = model.alpha_
+            # train model
+            if model_name == 'lasso':
+                model = Lasso(alpha=alpha).fit(X_train[samples_idx, :], y_train[samples_idx])
+            elif model_name == 'ols':
+                model = LinearRegression().fit(X_train[samples_idx, :], y_train[samples_idx])
+            else:
+                raise ValueError('model {} not implemented'.format(model_name))
             
-            # evaluating on test set
+            # evaluating model on test set
             pred = model.predict(X_test)
             y_mse[i, j] = np.sum(np.square(y_test - pred))
             y_pearson_r[i, j] = pearsonr(y_test, pred)[0]
