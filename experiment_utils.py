@@ -70,7 +70,7 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
         for j, n in enumerate(num_samples_arr):
             # using 10 independent samples of size n to select alpha independent of sampling for actual training
             if alpha is None:
-                alpha = determine_alpha(X_train, y_train, n, 1)
+                alpha = determine_alpha(X_train, y_train, n, 10)
             alphas[i, j] = alpha
             # randomly subsample n samples from training set for actual training
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
