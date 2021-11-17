@@ -60,7 +60,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     y_r2 = np.zeros((num_replicates, num_samples_arr.size))
     beta_mse = np.zeros((num_replicates, num_samples_arr.size))
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
-    alphas = np.zeros((num_replicates, num_samples_arr.size))
+    alphas = np.zeros(num_replicates)
     alphas_list = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
 
     for i in range(num_replicates):
@@ -69,8 +69,9 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
         # select alpha using the whole training set
-        model = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
-        alphas[i, j] = model.alpha_
+        model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
+        alpha = model_cv.alpha_
+        alphas[i] = alpha
 
         for j, n in enumerate(num_samples_arr):
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
