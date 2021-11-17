@@ -69,7 +69,10 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
         # select alpha using the whole training set
-        model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
+        if model_name == 'lasso':
+            model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
+        elif model_name == 'ridge':
+            model_cv = RidgeCV().fit(X_train, y_train)
         alpha = model_cv.alpha_
         alphas[i] = alpha
 
@@ -80,6 +83,8 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
                 model = Lasso(alpha=alpha).fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'ols':
                 model = LinearRegression().fit(X_train[samples_idx, :], y_train[samples_idx])
+            elif model_name == 'ridge':
+                model = RidgeRegression(alpha=alpha).fit(X_train[samples_idx, :], y_train[samples_idx])
             else:
                 raise ValueError('model {} not implemented'.format(model_name))
             
