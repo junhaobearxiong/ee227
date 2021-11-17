@@ -62,12 +62,12 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
     alphas = np.zeros((num_replicates, num_samples_arr.size))
 
     for i in range(num_replicates):
+        print('replicate: {}'.format(i+1))
         # each replicate has an independent train test split
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
 
         for j, n in enumerate(num_samples_arr):
-            print('replicate: {}, n: {}'.format(i+1, n))
             # using 10 independent samples of size n to select alpha independent of sampling for actual training
             if alpha is None:
                 alpha = determine_alpha(X_train, y_train, n, 1)

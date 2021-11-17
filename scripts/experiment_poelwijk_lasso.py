@@ -12,7 +12,7 @@ args = parser.parse_args()
 
 start_time = datetime.now()
 X, y = poelwijk_construct_Xy()
-num_samples_arr = np.arange(100, args.max_num_samples, args.num_samples_step)
+num_samples_arr = np.arange(50, args.max_num_samples, args.num_samples_step)
 run_lasso_across_sample_sizes(
 	X, y,
 	num_samples_arr=num_samples_arr,
