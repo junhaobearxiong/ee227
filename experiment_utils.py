@@ -45,7 +45,7 @@ def poelwijk_construct_Xy(df):
     return X, y
 
 
-def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, num_replicates=1, train_size=5000):
+def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, num_replicates=1):
     """
     num_replicates: number of replicates of model to train on a given number of samples
     """
@@ -60,7 +60,7 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
 
     for i in range(num_replicates):
         # each replicate has an independent train test split
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=train_size)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
 
         for j, n in enumerate(num_samples_arr):
             print('replicate: {}, n: {}'.format(i+1, n))
