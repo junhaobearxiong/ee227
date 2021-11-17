@@ -69,13 +69,19 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
 
         for j, n in enumerate(num_samples_arr):
             # using 10 independent samples of size n to select alpha independent of sampling for actual training
+            '''
             if alpha is None:
                 alpha = determine_alpha(X_train, y_train, n, 10)
             alphas[i, j] = alpha
-            # randomly subsample n samples from training set for actual training
+            randomly subsample n samples from training set for actual training
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
             model = Lasso(alpha=alpha)
             model.fit(X_train[samples_idx, :], y_train[samples_idx])
+            '''
+            alphas = [5e-8, 1e-8, 5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3, 5e-2, 1e-2, 5e-1, 1e-1, 1]
+            samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
+            model = LassoCV(alphas=alphas, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
+            alphas[i, j] = model.alpha_            
 
             # evaluating on test set
             pred = model.predict(X_test)
@@ -98,12 +104,11 @@ def determine_alpha(X_train, y_train, n, replicates=10):
     Determines the optimal regularization parameter for n data points randomly subsampled from
     a given training set (X_train, y_train)
     """
-    alphas = [5e-8, 1e-8, 5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
+    alphas = [5e-8, 1e-8, 5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3, 5e-2, 1e-2, 5e-1, 1e-1, 1]
     opt_vals = np.zeros(replicates)
     for j in range(replicates):
         samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-        model = LassoCV(alphas=alphas, n_jobs=10)
-        model.fit(X_train[samples_idx, :], y_train[samples_idx])
+        model = LassoCV(alphas=alphas, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
         opt_vals[j] = model.alpha_
     cts = Counter(opt_vals)
     opt_alpha = cts.most_common(1)[0][0]
