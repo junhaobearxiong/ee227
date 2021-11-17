@@ -15,6 +15,7 @@ X, y = poelwijk_construct_Xy()
 num_samples_arr = np.arange(100, args.max_num_samples, args.num_samples_step)
 run_lasso_across_sample_sizes(
 	X, y,
+	alpha=1e-5,
 	num_samples_arr=num_samples_arr,
 	num_replicates=args.num_replicates,
 	savefile='results/poelwijk_lasso_sample_sizes_r{}_n{}s{}.pkl'.format(args.num_replicates, args.max_num_samples, args.num_samples_step)

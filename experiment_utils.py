@@ -69,19 +69,22 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
 
         for j, n in enumerate(num_samples_arr):
             # using 10 independent samples of size n to select alpha independent of sampling for actual training
-            '''
+            
             if alpha is None:
                 alpha = determine_alpha(X_train, y_train, n, 10)
+                print('not here')
             alphas[i, j] = alpha
-            randomly subsample n samples from training set for actual training
+            # randomly subsample n samples from training set for actual training
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
             model = Lasso(alpha=alpha)
             model.fit(X_train[samples_idx, :], y_train[samples_idx])
+
             '''
-            alphas = [5e-8, 1e-8, 5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3, 5e-2, 1e-2, 5e-1, 1e-1, 1]
+            alphas_list = [5e-8, 1e-8, 5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3, 5e-2, 1e-2, 5e-1, 1e-1, 1]
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-            model = LassoCV(alphas=alphas, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
-            alphas[i, j] = model.alpha_            
+            model = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
+            alphas[i, j] = model.alpha_          
+            '''
 
             # evaluating on test set
             pred = model.predict(X_test)
