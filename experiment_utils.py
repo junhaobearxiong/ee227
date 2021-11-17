@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
@@ -8,8 +9,15 @@ from collections import Counter
 from utils import *
 
 
-def convert_binary_str_to_arr(df):
+def get_idx_by_epistasis_order(bin_seqs):
+    # order the indices of binary sequences by the order of epistasis 
+    # i.e. number of 1's in each sequence
+    return np.argsort(np.sum(bin_seqs==1, axis=1))
+
+
+def poelwijk_convert_binary_str_to_arr():
     # convert the binary strings from poelwijk into np.array
+    df = pd.read_excel("data/poelwijk_supp3.xlsx")
     bin_seqs_ = list(df['binary'][1:])
     bin_seqs = []
     for s_ in bin_seqs_:
@@ -25,13 +33,8 @@ def convert_binary_str_to_arr(df):
     return bin_seqs
 
 
-def get_idx_by_epistasis_order(bin_seqs):
-    # order the indices of binary sequences by the order of epistasis 
-    # i.e. number of 1's in each sequence
-    return np.argsort(np.sum(bin_seqs==1, axis=1))
-
-
-def poelwijk_construct_Xy(df):
+def poelwijk_construct_Xy():
+    df = pd.read_excel("data/poelwijk_supp3.xlsx")
     y = np.array(df['brightness.2'][1:]).astype(float)
     '''
     TODO: i don't understand why this works. X is not ordered the same way y is 
@@ -60,11 +63,12 @@ def run_lasso_across_sample_sizes(X, y, num_samples_arr, savefile, alpha=None, n
 
     for i in range(num_replicates):
         # each replicate has an independent train test split
+        # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
 
         for j, n in enumerate(num_samples_arr):
             print('replicate: {}, n: {}'.format(i+1, n))
-            # using 10 independent samples of size n to select alpha before sampling for training
+            # using 10 independent samples of size n to select alpha independent of sampling for actual training
             if alpha is None:
                 alpha = determine_alpha(X_train, y_train, n, 1)
             alphas[i, j] = alpha
@@ -97,8 +101,9 @@ def determine_alpha(X_train, y_train, n, replicates=10):
     alphas = [5e-8, 1e-8, 5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
     opt_vals = np.zeros(replicates)
     for j in range(replicates):
+        samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
         model = LassoCV(alphas=alphas, n_jobs=10)
-        model.fit(X_train, y_train)
+        model.fit(X_train[samples_idx, :], y_train[samples_idx])
         opt_vals[j] = model.alpha_
     cts = Counter(opt_vals)
     opt_alpha = cts.most_common(1)[0][0]
