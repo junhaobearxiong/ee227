@@ -9,13 +9,13 @@ idx_epi_ord = get_idx_by_epistasis_order(bin_seqs)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=2000)
 samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-alpha = determine_alpha(X_train, y_train, n)
-model = Lasso(alpha=alpha)
-model.fit(X_train[samples_idx, :], y_train[samples_idx])
+model = Lasso(alpha=1e-5).fit(X_train[samples_idx, :], y_train[samples_idx])
 
 betahat = model.coef_
 betahat = betahat[idx_epi_ord]
 beta = X @ y
 beta = beta[idx_epi_ord]
 
-plot_beta_comparison(beta, betahat, 'figures/poelwijk_beta.png')
+ax = plot_beta_comparison(beta, betahat)
+ax.set_title('True vs. Predicted Fourier Coefficient on Poelwijk el al. ({} Samples)'.format(n), fontsize=20)
+plt.savefig('figures/poelwijk_beta_n{}.png'.format(n))

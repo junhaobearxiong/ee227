@@ -4,7 +4,7 @@ import numpy as np
 from scipy.special import binom
 
 
-def plot_beta_comparison(beta, betahat, savefile, L=13, max_order=5):
+def plot_beta_comparison(beta, betahat, L=13, max_order=5):
     """
     Plot comparison between true (`beta`) and predicted (`betahat`) epistasis coeffcients
     Assumed beta and betahat are sorted by epistatic orders
@@ -68,8 +68,7 @@ def plot_beta_comparison(beta, betahat, savefile, L=13, max_order=5):
     ax.set_yticks(yticks)
     ax.set_yticklabels(yticklabels, fontsize=order_label_fontsize)
     ax.set_xlim([-10, num_coeffs+5])
-    ax.set_ylabel("Magnitude of Fourier coefficient", labelpad=30, fontsize=order_label_fontsize)
+    ax.set_ylabel("Fourier Coefficient", labelpad=30, fontsize=order_label_fontsize)
     ax.legend(fontsize=order_label_fontsize)
     ax.grid(False)
-
-    plt.savefig(savefile)
+    return ax
