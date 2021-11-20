@@ -1,7 +1,41 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 from scipy.special import binom
+
+
+def plot_neighborhoods(ax, V, L, positions, label_rotation=0, s=120):
+    """
+    Plots a set of neighborhoods, as done in Figure 1 and Figure 4A.
+    """
+    fig, ax = plt.subplots(figsize=(2, 2))
+    colormap = sns.color_palette('crest', as_cmap=True)
+    for j in range(L):
+        y_ = [L-j-0.5 for _ in range(len(V[j]))]
+        x_ = [v-0.5 for v in V[j]]
+        ax.scatter(x_, y_, facecolor=colormap(0.9), marker='s',s=s)
+
+    ax.set_xticks(range(L))
+    ax.set_yticks(range(L+1))
+    ax.xaxis.tick_top()
+    ax.xaxis.set_major_formatter(ticker.NullFormatter())
+    ax.xaxis.set_minor_locator(ticker.FixedLocator([i+0.5 for i in range(L)]))
+    ax.yaxis.set_major_formatter(ticker.NullFormatter())
+    ax.yaxis.set_minor_locator(ticker.FixedLocator([i+0.5 for i in range(L)]))
+    ax.xaxis.set_minor_formatter(ticker.FixedFormatter(positions))
+    ax.yaxis.set_minor_formatter(ticker.FixedFormatter(['$V^{[%s]}$' % s for s in positions[::-1]]))
+    ax.tick_params(axis='x', which='minor', rotation=label_rotation)
+    ax.tick_params(axis='x', which='both', length=0)
+    ax.tick_params(axis='y', which='both', length=0)
+    
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xlim([0, L])
+    ax.set_ylim([0, L])
+    ax.spines['right'].set_visible(True)
+    ax.spines['top'].set_visible(True)
+    plt.grid()
+    return ax
 
 
 def plot_beta_comparison(beta, betahat, L=13, max_order=5):

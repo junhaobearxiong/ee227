@@ -12,6 +12,7 @@ samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
 model = Lasso(alpha=1e-5).fit(X_train[samples_idx, :], y_train[samples_idx])
 
 betahat = model.coef_
+betahat[0] = model.intercept_
 betahat = betahat[idx_epi_ord]
 beta = X @ y
 beta = beta[idx_epi_ord]
