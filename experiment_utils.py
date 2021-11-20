@@ -122,23 +122,23 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
     alphas_list = np.linspace(1e-8, 1, 10)
 
     if model_name == 'lasso':
-        model_cv = LassoCV(alphas=alphas_list, n_jobs=-1).fit(X_train, y_train)
+        model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
         hyperparams['alpha'] = model_cv.alpha_
     elif model_name == 'ridge':
         model_cv = RidgeCV().fit(X_train, y_train)
         hyperparams['alpha'] = model_cv.alpha_
     elif model_name == 'elastic_net':
         l1_ratio_list = [.1, .5, .7, .9, .95, .99, 1]
-        model_cv = ElasticNetCV(l1_ratio=l1_ratio_list, alphas=alphas_list, n_jobs=-1).fit(X_train, y_train)
+        model_cv = ElasticNetCV(l1_ratio=l1_ratio_list, alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
         hyperparams['alpha'] = model_cv.alpha_
         hyperparams['l1_ratio'] = model_cv.l1_ratio_
     elif model_name == 'group_lasso':
         # TODO: implement CV for group lasso
         params_dict = {}
-        params_dict['group_reg'] =  alphas_list
-        params_dict['l1_reg'] = alphas_list
+        params_dict['group_reg'] =  np.linspace(1e-8, 1, 5)
+        params_dict['l1_reg'] = np.linspace(1e-8, 1, 5)
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3)
-        model_cv = GridSearchCV(model, params_dict, n_jobs=-1, refit=False)
+        model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False)
         model_cv.fit(X_train, y_train)
         hyperparams = model_cv.best_params_
     return hyperparams
