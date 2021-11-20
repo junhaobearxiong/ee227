@@ -137,7 +137,7 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
         params_dict = {}
         params_dict['group_reg'] =  alphas_list
         params_dict['l1_reg'] = alphas_list
-        model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3)
+        model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3, warm_start=True)
         model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False)
         model_cv.fit(X_train, y_train)
         hyperparams = model_cv.best_params_
