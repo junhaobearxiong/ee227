@@ -119,7 +119,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
 def select_hyperparams(X_train, y_train, model_name, groups=None):
     hyperparams = {}
-    alphas_list = np.linspace(1e-8, 1, 10)
+    alphas_list = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
 
     if model_name == 'lasso':
         model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
@@ -135,8 +135,8 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
     elif model_name == 'group_lasso':
         # TODO: implement CV for group lasso
         params_dict = {}
-        params_dict['group_reg'] =  np.linspace(1e-8, 1, 5)
-        params_dict['l1_reg'] = np.linspace(1e-8, 1, 5)
+        params_dict['group_reg'] =  alphas_list
+        params_dict['l1_reg'] = alphas_list
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3)
         model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False)
         model_cv.fit(X_train, y_train)

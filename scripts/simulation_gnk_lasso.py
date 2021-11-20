@@ -32,6 +32,6 @@ results = run_model_across_sample_sizes(X, y,
 	num_samples_arr=num_samples_arr,
 	num_replicates=args.num_replicates,
 	groups=groups,
-	savefile='results/gnk_{}_L{}_q{}_V{}_K{}_r{}_n{}s{}'.format(args.model_name, args.L, args.q, args.Vstr, args.K, args.num_replicates, args.max_num_samples, args.num_samples_step))
+	savefile='results/gnk_{}_L{}_q{}_V{}_K{}_r{}_n{}s{}.pkl'.format(args.model_name, args.L, args.q, args.Vstr, args.K, args.num_replicates, args.max_num_samples, args.num_samples_step))
 
 print('Time elapsed: {}'.format(datetime.now() - start_time))
