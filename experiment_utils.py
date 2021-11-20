@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Lasso, LassoCV, LinearRegression, Ridge, RidgeCV, ElasticNet, ElasticNetCV
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import r2_score
 from scipy.stats import pearsonr
 from group_lasso import GroupLasso
@@ -91,7 +91,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             elif model_name == 'group_lasso':
                 if groups is None:
                     raise ValueError('`groups` cannot be `None` for group_lasso')
-                model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'])
+                model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'], supress_warning=True, n_iter=1000, tol=1e-3)
                 model.fit(X_train[samples_idx, :], y_train[samples_idx])
             else:
                 raise ValueError('model {} not implemented'.format(model_name))
@@ -117,9 +117,9 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
 
 
-def select_hyperparams(X_train, y_train, model_name):
+def select_hyperparams(X_train, y_train, model_name, groups=None):
     hyperparams = {}
-    alphas_list = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
+    alphas_list = np.linspace(1e-8, 1, 10)
 
     if model_name == 'lasso':
         model_cv = LassoCV(alphas=alphas_list, n_jobs=-1).fit(X_train, y_train)
@@ -134,9 +134,13 @@ def select_hyperparams(X_train, y_train, model_name):
         hyperparams['l1_ratio'] = model_cv.l1_ratio_
     elif model_name == 'group_lasso':
         # TODO: implement CV for group lasso
-        hyperparams['group_reg'] = 0.05
-        hyperparams['l1_reg'] = 0.05
-
+        params_dict = {}
+        params_dict['group_reg'] =  alphas_list
+        params_dict['l1_reg'] = alphas_list
+        model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3)
+        model_cv = GridSearchCV(model, params_dict, n_jobs=-1, refit=False)
+        model_cv.fit(X_train, y_train)
+        hyperparams = model_cv.best_params_
     return hyperparams
 
 

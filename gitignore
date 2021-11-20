@@ -1,0 +1,11 @@
+*.sh
+.DS_Store
+.ipynb_checkpoints/
+.jupyter_pid
+__pycache__/
+data/
+figures/
+hw/
+notebooks/
+results/
+venv/
