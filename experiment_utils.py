@@ -80,8 +80,9 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
         for j, n in enumerate(num_samples_arr):
             print('{} out of {} sampling pts'.format(j+1, num_samples_arr.size))
+            # subsample n samples from the training set for actual training 
+            # each subsamples trained with the same (already chosen) hyperparameters
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-            # train model
             if model_name == 'lasso':
                 model = Lasso(alpha=hyperparams['alpha']).fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'ols':
@@ -93,6 +94,8 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
                     raise ValueError('`groups` cannot be `None` for group_lasso')
                 model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'], supress_warning=True, n_iter=1000, tol=1e-3)
                 model.fit(X_train[samples_idx, :], y_train[samples_idx])
+            elif model_name == 'elastic_net':
+                model = ElasticNet(alpha=hyperparams['alpha'], l1_ratio=hyperparams['l1_ratio']).fit(X_train[samples_idx, :], y_train[samples_idx])
             else:
                 raise ValueError('model {} not implemented'.format(model_name))
             
@@ -135,8 +138,8 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
     elif model_name == 'group_lasso':
         # TODO: implement CV for group lasso
         params_dict = {}
-        params_dict['group_reg'] =  alphas_list
-        params_dict['l1_reg'] = alphas_list
+        params_dict['group_reg'] =  [1e-8, 1e-5, 1e-2, 1]
+        params_dict['l1_reg'] = [1e-8, 1e-5, 1e-2, 1]
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3, warm_start=True)
         model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False)
         model_cv.fit(X_train, y_train)
