@@ -1,10 +1,18 @@
 from utils import sample_gnk_fitness_function
 import pickle
+import argparse
 
-L = 6 # length of sequence
-q = 3 # alphabet size
-K = 4 # neighborhood size
-Vstr = 'random' # neighborhood type 
+parser = argparse.ArgumentParser()
+parser.add_argument('L', type=int)
+parser.add_argument('q', type=int)
+parser.add_argument('Vstr', type=str)
+parser.add_argument('K', type=int)
+args = parser.parse_args()
+
+L = args.L # length of sequence
+q = args.q # alphabet size
+K = args.K # neighborhood size
+Vstr = args.Vstr # neighborhood type 
 
 y, X, beta, V = sample_gnk_fitness_function(L=L, qs=L*[q], V=Vstr, K=K)
 
