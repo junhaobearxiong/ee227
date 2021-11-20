@@ -9,3 +9,4 @@ hw/
 notebooks/
 results/
 venv/
+slurm_scripts/
