@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Lasso, LassoCV, LinearRegression, 
+from sklearn.linear_model import Lasso, LassoCV, LinearRegression, Ridge, RidgeCV, ElasticNet, ElasticNetCV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 from scipy.stats import pearsonr
+from group_lasso import GroupLasso
 import pickle
 from collections import Counter
 from utils import *
@@ -51,7 +52,7 @@ def poelwijk_construct_Xy(readfile=None):
     return X, y
 
 
-def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, num_replicates=1, beta=None, alpha=None):
+def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, num_replicates=1, beta=None, hyperparams=None, groups=None):
     """
     num_replicates: number of replicates of model to train on a given number of samples
     """
@@ -65,37 +66,33 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     y_r2 = np.zeros((num_replicates, num_samples_arr.size))
     beta_mse = np.zeros((num_replicates, num_samples_arr.size))
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
-    alphas = np.zeros(num_replicates)
+    hyperparams_list = [None] * num_replicates
 
     for i in range(num_replicates):
         print('replicate: {}'.format(i+1))
         # each replicate has an independent train test split
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
-        # select alpha using the whole training set
-        if alpha is None:
-            if model_name == 'lasso':
-                alphas_list = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
-                model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
-            elif model_name == 'ridge':
-                model_cv = RidgeCV().fit(X_train, y_train)
-            elif model_name == 'elastic_net':
-                model_cv = Elastic
-
-            # elif model_name == 'group_lasso':
-            alpha = model_cv.alpha_
-        alphas[i] = alpha
+        # select hyperparams by cross-validation using the whole training set
+        if hyperparams is None:
+            hyperparams = select_hyperparams(X_train, y_train, model_name)
+        hyperparams_list[i] = hyperparams
 
         for j, n in enumerate(num_samples_arr):
             print('{} out of {} sampling pts'.format(j+1, num_samples_arr.size))
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
             # train model
             if model_name == 'lasso':
-                model = Lasso(alpha=alpha).fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = Lasso(alpha=hyperparams['alpha']).fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'ols':
                 model = LinearRegression().fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'ridge':
-                model = Ridge(alpha=alpha).fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = Ridge(alpha=hyperparams['alpha']).fit(X_train[samples_idx, :], y_train[samples_idx])
+            elif model_name == 'group_lasso':
+                if groups is None:
+                    raise ValueError('`groups` cannot be `None` for group_lasso')
+                model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'])
+                model.fit(X_train[samples_idx, :], y_train[samples_idx])
             else:
                 raise ValueError('model {} not implemented'.format(model_name))
             
@@ -107,16 +104,41 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
             # TODO: figure out how best to deal with intercept: the first element of beta corresponds to intercept
             # but `model.intercept_` is not in the same scale as sum(y) / sqrt(M)
-            beta_hat = model.coef_[1:]
-            beta = beta[1:]
+            beta_hat = model.coef_
+            beta_hat[0] = model.intercept_
             beta_mse[i, j] = np.sum(np.square(beta - beta_hat))
             beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r, 'y_r2': y_r2,
-        'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'alpha': alphas}
+        'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list}
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
     return results_dict
+
+
+
+def select_hyperparams(X_train, y_train, model_name):
+    hyperparams = {}
+    alphas_list = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
+
+    if model_name == 'lasso':
+        model_cv = LassoCV(alphas=alphas_list, n_jobs=-1).fit(X_train, y_train)
+        hyperparams['alpha'] = model_cv.alpha_
+    elif model_name == 'ridge':
+        model_cv = RidgeCV().fit(X_train, y_train)
+        hyperparams['alpha'] = model_cv.alpha_
+    elif model_name == 'elastic_net':
+        l1_ratio_list = [.1, .5, .7, .9, .95, .99, 1]
+        model_cv = ElasticNetCV(l1_ratio=l1_ratio_list, alphas=alphas_list, n_jobs=-1).fit(X_train, y_train)
+        hyperparams['alpha'] = model_cv.alpha_
+        hyperparams['l1_ratio'] = model_cv.l1_ratio_
+    elif model_name == 'group_lasso':
+        # TODO: implement CV for group lasso
+        hyperparams['group_reg'] = 0.05
+        hyperparams['l1_reg'] = 0.05
+
+    return hyperparams
+
 
 
 def determine_alpha(X_train, y_train, n, replicates=10):

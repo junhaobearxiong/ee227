@@ -30,6 +30,22 @@ def get_all_interactions(L, index_1=False):
     return all_U
 
 
+def get_group_assignments(L, q):
+    """
+    Return a list of indices that indicate which group of interaction a coefficient belongs to
+    size is q^L, with 2^L unique elements (i.e. number of groups)
+    """
+    # number of coeffs for each interaction term
+    all_u = get_all_interactions(L)
+    num_coeffs_per_u = [(q-1)**len(u) for u in all_u] 
+    groups = []
+    for i in range(len(num_coeffs_per_u)):
+        # iterate over the groups
+        groups.append(np.repeat(i+1, num_coeffs_per_u[i]))
+    groups = np.concatenate(groups)
+    return groups
+
+
 def complete_graph_evs(q):
     """
     Returns a set of eigenvectors of complete graph of size q as column vectors of a matrix
