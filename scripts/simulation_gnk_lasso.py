@@ -15,6 +15,8 @@ parser.add_argument('min_num_samples', type=int)
 parser.add_argument('max_num_samples', type=int)
 parser.add_argument('num_samples_step', type=int)
 parser.add_argument('num_replicates', type=int, nargs='?', default=1)
+parser.add_argument('l1_reg', type=float, nargs='?', default=None)
+parser.add_argument('group_reg', type=float, nargs='?', default=None)
 
 args = parser.parse_args()
 start_time = datetime.now()
@@ -28,7 +30,16 @@ beta = gnk_model['beta']
 num_samples_arr = np.arange(args.min_num_samples, args.max_num_samples + 1, args.num_samples_step)
 groups = get_group_assignments(L=args.L, q=args.q)
 
-# hyperparams = {'group_reg': 0.0001, 'l1_reg': 0.0001}
+savefile = 'results/gnk_{}_L{}_q{}_V{}_K{}_r{}_n{}-{}s{}'.format(args.model_name, args.L, args.q, args.Vstr, args.K, 
+		args.num_replicates, args.min_num_samples, args.max_num_samples, args.num_samples_step)
+
+if args.l1_reg != None and args.group_reg != None:
+	hyperparams = {'group_reg': args.group_reg, 'l1_reg': args.l1_reg}
+	savefile += '_l1reg{}_groupreg{}'.format(args.l1_reg, args.group_reg)
+else:
+	hyperparams = None
+
+savefile += '.pkl'
 
 results = run_model_across_sample_sizes(X, y, 
 	beta=beta, 
@@ -36,9 +47,8 @@ results = run_model_across_sample_sizes(X, y,
 	num_samples_arr=num_samples_arr,
 	num_replicates=args.num_replicates,
 	groups=groups,
-	savefile='results/gnk_{}_L{}_q{}_V{}_K{}_r{}_n{}-{}s{}.pkl'.format(args.model_name, args.L, args.q, args.Vstr, args.K, 
-		args.num_replicates, args.min_num_samples, args.max_num_samples, args.num_samples_step),
-	# hyperparams=hyperparams
+	savefile=savefile,
+	hyperparams=hyperparams
 )
 
 print('Time elapsed: {}'.format(datetime.now() - start_time))
