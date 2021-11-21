@@ -138,8 +138,8 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
         hyperparams['l1_ratio'] = model_cv.l1_ratio_
     elif model_name == 'group_lasso':
         params_dict = {}
-        params_dict['group_reg'] =  [1e-8, 1e-5, 1e-2, 1]
-        params_dict['l1_reg'] = [1e-8, 1e-5, 1e-2, 1]
+        params_dict['group_reg'] =  [0, 1e-7, 1e-5, 1e-3, 1e-1, 1]
+        params_dict['l1_reg'] = [0, 1e-7, 1e-5, 1e-3, 1e-1, 1]
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=2000, tol=1e-3, warm_start=True)
         model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
