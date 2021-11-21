@@ -75,7 +75,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
         # select hyperparams by cross-validation using the whole training set
         if hyperparams is None:
-            hyperparams = select_hyperparams(X_train, y_train, model_name)
+            hyperparams, model_cv = select_hyperparams(X_train, y_train, model_name)
         hyperparams_list[i] = hyperparams
 
         for j, n in enumerate(num_samples_arr):
@@ -124,8 +124,9 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
     hyperparams = {}
     alphas_list = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
 
+    print('------------ running cv for {} with sample size {} -------------'.format(model_name, X_train.shape[0]))
     if model_name == 'lasso':
-        model_cv = LassoCV(alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
+        model_cv = LassoCV(alphas=alphas_list, n_jobs=10, max_iter=2000, tol=1e-3, verbose=1).fit(X_train, y_train)
         hyperparams['alpha'] = model_cv.alpha_
     elif model_name == 'ridge':
         model_cv = RidgeCV().fit(X_train, y_train)
@@ -136,15 +137,14 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
         hyperparams['alpha'] = model_cv.alpha_
         hyperparams['l1_ratio'] = model_cv.l1_ratio_
     elif model_name == 'group_lasso':
-        # TODO: implement CV for group lasso
         params_dict = {}
         params_dict['group_reg'] =  [1e-8, 1e-5, 1e-2, 1]
         params_dict['l1_reg'] = [1e-8, 1e-5, 1e-2, 1]
-        model = GroupLasso(groups=groups, supress_warning=True, n_iter=1000, tol=1e-3, warm_start=True)
-        model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False)
+        model = GroupLasso(groups=groups, supress_warning=True, n_iter=2000, tol=1e-3, warm_start=True)
+        model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
         hyperparams = model_cv.best_params_
-    return hyperparams
+    return (hyperparams, model_cv)
 
 
 

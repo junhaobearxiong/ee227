@@ -5,7 +5,7 @@ import numpy as np
 from scipy.special import binom
 
 
-def plot_neighborhoods(ax, V, L, positions, label_rotation=0, s=120):
+def plot_neighborhoods(V, L, positions, label_rotation=0, s=120):
     """
     Plots a set of neighborhoods, as done in Figure 1 and Figure 4A.
     """

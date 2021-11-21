@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from itertools import chain, combinations, product
+from scipy.special import binom
+from math import factorial
 from tqdm import tqdm
 
 """
@@ -196,6 +198,63 @@ def walsh_hadamard_matrix(L=13, normalize=False):
 
 
 #################################### GNK #####################################
+
+def get_neighborhood_powerset(V):
+    """Returns the union of powersets of a set of neighborhoods"""
+    Vs = [sorted(Vk) for Vk in V]
+    powersets = [tuple(utils.powerset(Vs[i])) for i in range(len(Vs))]
+    T = set().union(*powersets)
+    return T
+
+
+def calculate_sparsity(L, q, V):
+    """Calculates sparsity given any neighborhoods V=[V1,V2,...,VL]"""
+    T = get_neighborhood_powerset(V)
+    sparsity = 0
+    for U in T:
+        sparsity += (q-1)**len(U)
+    return sparsity
+
+
+def calc_bn_sparsity(L, q, K):
+    """Calculates sparsity of Block Beighborhood scheme"""
+    sparsity = (L/K)*(q**K - 1) +1
+    return sparsity
+
+
+def calc_an_sparsity(L, q, K):
+    """Calculates sparsity of Adjacent Neighborhood scheme"""
+    return 1 + L*(q-1)*q**(K-1)
+
+
+def _calc_set_prob(r, L, K):
+    """Calculates p(r) for a set of size r, for use with 'calc_mean_rn_sparsity'"""
+    if r == 0 or r == 1:
+        return 1
+    else:
+        ar = (factorial(K-1) / factorial(L-1)) * (factorial(L-r) / factorial(K-r))
+        br = ar * ((K-r) / (L-r))
+        term1 = (1-ar)**r
+        term2 = (1-br)**(L-r)
+        return 1-term1*term2
+  
+
+def calc_mean_rn_sparsity(L, q, K):
+    """Calculates expected sparsity of Random Neighborhood scheme"""
+    sparsity = 0
+    for r in range(K+1):
+        pr = _calc_set_prob(r, L, K)
+        sparsity += binom(L, r)*pr *(q-1)**r
+    return sparsity
+
+
+def calc_max_rn_sparsity(L, q, K):
+    """Calculates an upper bound on the sparsity of the Random Neighborhood scheme"""
+    bd = 1+L*(q-1)
+    for r in range(2, K+1):
+        bd += L * binom(K, r) * (q-1)**r
+    return bd
+
 
 def build_adj_neighborhoods(L, K, symmetric=True):
     """Build Adjacent Neighborhoods with periodic boundary conditions"""

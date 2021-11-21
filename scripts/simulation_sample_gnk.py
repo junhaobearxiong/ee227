@@ -11,8 +11,8 @@ args = parser.parse_args()
 
 L = args.L # length of sequence
 q = args.q # alphabet size
-K = args.K # neighborhood size
 Vstr = args.Vstr # neighborhood type 
+K = args.K # neighborhood size
 
 y, X, beta, V = sample_gnk_fitness_function(L=L, qs=L*[q], V=Vstr, K=K)
 
