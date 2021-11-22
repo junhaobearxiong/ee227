@@ -92,7 +92,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             elif model_name == 'group_lasso':
                 if groups is None:
                     raise ValueError('`groups` cannot be `None` for group_lasso')
-                model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'], supress_warning=True, n_iter=1000, tol=1e-3)
+                model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'], supress_warning=True, n_iter=3000, tol=1e-3)
                 model.fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'elastic_net':
                 model = ElasticNet(alpha=hyperparams['alpha'], l1_ratio=hyperparams['l1_ratio']).fit(X_train[samples_idx, :], y_train[samples_idx])
@@ -140,7 +140,7 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
         params_dict = {}
         params_dict['group_reg'] =  [0, 1e-7, 1e-5, 1e-3, 1e-1, 1]
         params_dict['l1_reg'] = [0, 1e-7, 1e-5, 1e-3, 1e-1, 1]
-        model = GroupLasso(groups=groups, supress_warning=True, n_iter=2000, tol=1e-3, warm_start=True)
+        model = GroupLasso(groups=groups, supress_warning=True, n_iter=3000, tol=1e-3, warm_start=True)
         model_cv = GridSearchCV(model, params_dict, n_jobs=10, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
         hyperparams = model_cv.best_params_
