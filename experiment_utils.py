@@ -52,9 +52,13 @@ def poelwijk_construct_Xy(readfile=None):
     return X, y
 
 
-def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, num_replicates=1, beta=None, hyperparams=None, groups=None):
+def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, num_replicates=1, 
+    beta=None, cv=1, params_dict=None, groups=None):
     """
     num_replicates: number of replicates of model to train on a given number of samples
+    cv: whether to select hyperparams by cross validation with the function `select_hyperparams`
+    params_dict: if `cv == 1` (coarse grid) or `cv == 2` (fine grid), then `params_dict` should give the range of hyperparameters for `GridSearchCV`
+        if `cv == 0`, then `params_dict` should provide the hyperparameter used in training, no cross validation is performed
     """
     print('------------{} for max number of samples: {}, number of replicates: {}-----------'.format(model_name, num_samples_arr.max(), num_replicates))
     if beta is None:
@@ -67,18 +71,19 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     hyperparams_list = [None] * num_replicates
     model_cv_list = [None] * num_replicates
-    do_cv = hyperparams is None
 
     for i in range(num_replicates):
         print('replicate: {}'.format(i+1))
         # each replicate has an independent train test split
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
-        if do_cv:
-            model_cv = select_hyperparams(X_train, y_train, model_name)
+        if cv > 0:
+            model_cv = select_hyperparams(X_train, y_train, model_name, params_dict)
             model_cv_list[i] = pd.DataFrame(model_cv.cv_results_)
             hyperparams = model_cv.best_params_
             hyperparams_list[i] = hyperparams
+        else:
+            hyperparams = params_dict
 
         for j, n in enumerate(num_samples_arr):
             print('{} out of {} sampling pts'.format(j+1, num_samples_arr.size))
@@ -121,43 +126,14 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
 
 
-def select_hyperparams(X_train, y_train, model_name, groups=None):
+def select_hyperparams(X_train, y_train, model_name, params_dict, groups=None):
     print('------------ running cv for {} with sample size {} -------------'.format(model_name, X_train.shape[0]))
     if model_name == 'lasso':
-        params_dict = {}
-        params_dict['alpha'] =  [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1] # coarse grid
         model = Lasso(max_iter=5000, tol=1e-3)
         model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
-    elif model_name == 'ridge':
-        model_cv = RidgeCV().fit(X_train, y_train)
-    elif model_name == 'elastic_net':
-        l1_ratio_list = [.1, .5, .7, .9, .95, .99, 1]
-        model_cv = ElasticNetCV(l1_ratio=l1_ratio_list, alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
     elif model_name == 'group_lasso':
-        params_dict = {}
-        # coarse grid
-        params_dict['group_reg'] =  [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
-        params_dict['l1_reg'] = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=5000, tol=1e-3)
         model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
     return model_cv
-
-
-
-def determine_alpha(X_train, y_train, n, replicates=10):
-    """
-    Determines the optimal regularization parameter for n data points randomly subsampled from
-    a given training set (X_train, y_train)
-    """
-    alphas = [5e-7, 1e-7, 5e-6, 1e-6, 5e-5, 1e-5, 5e-4, 1e-4, 5e-3, 1e-3]
-    opt_vals = np.zeros(replicates)
-    for j in range(replicates):
-        samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
-        model = LassoCV(alphas=alphas, n_jobs=10).fit(X_train[samples_idx, :], y_train[samples_idx])
-        opt_vals[j] = model.alpha_
-    cts = Counter(opt_vals)
-    opt_alpha = cts.most_common(1)[0][0]
-    return opt_alpha
-

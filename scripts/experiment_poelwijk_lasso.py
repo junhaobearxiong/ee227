@@ -15,10 +15,10 @@ start_time = datetime.now()
 X, y = poelwijk_construct_Xy()
 num_samples_arr = np.arange(100, args.max_num_samples, args.num_samples_step)
 run_model_across_sample_sizes(
-	X, y,
-	model_name=args.model,
-	num_samples_arr=num_samples_arr,
-	num_replicates=args.num_replicates,
-	savefile='results/poelwijk_{}_sample_sizes_r{}_n{}s{}.pkl'.format(args.model, args.num_replicates, args.max_num_samples, args.num_samples_step)
+    X, y,
+    model_name=args.model,
+    num_samples_arr=num_samples_arr,
+    num_replicates=args.num_replicates,
+    savefile='results/poelwijk_{}_sample_sizes_r{}_n{}s{}.pkl'.format(args.model, args.num_replicates, args.max_num_samples, args.num_samples_step)
 )
 print('Time elapsed: {}'.format(datetime.now() - start_time))
