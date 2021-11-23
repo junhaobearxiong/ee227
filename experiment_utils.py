@@ -125,7 +125,7 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
     print('------------ running cv for {} with sample size {} -------------'.format(model_name, X_train.shape[0]))
     if model_name == 'lasso':
         params_dict = {}
-        params_dict['alpha'] =  [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+        params_dict['alpha'] =  [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1] # coarse grid
         model = Lasso(max_iter=5000, tol=1e-3)
         model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
@@ -136,9 +136,10 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
         model_cv = ElasticNetCV(l1_ratio=l1_ratio_list, alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
     elif model_name == 'group_lasso':
         params_dict = {}
+        # coarse grid
         params_dict['group_reg'] =  [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
-        params_dict['l1_reg'] = [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
-        model = GroupLasso(groups=groups, supress_warning=True, n_iter=5000, tol=1e-3, warm_start=True)
+        params_dict['l1_reg'] = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+        model = GroupLasso(groups=groups, supress_warning=True, n_iter=5000, tol=1e-3)
         model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
     return model_cv
