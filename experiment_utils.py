@@ -63,20 +63,22 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     # metrics to return
     y_mse = np.zeros((num_replicates, num_samples_arr.size))
     y_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
-    y_r2 = np.zeros((num_replicates, num_samples_arr.size))
     beta_mse = np.zeros((num_replicates, num_samples_arr.size))
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     hyperparams_list = [None] * num_replicates
+    model_cv_list = [None] * num_replicates
+    do_cv = hyperparams is None
 
     for i in range(num_replicates):
         print('replicate: {}'.format(i+1))
         # each replicate has an independent train test split
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
-        # select hyperparams by cross-validation using the whole training set
-        if hyperparams is None:
-            hyperparams, model_cv = select_hyperparams(X_train, y_train, model_name)
-        hyperparams_list[i] = hyperparams
+        if do_cv:
+            model_cv = select_hyperparams(X_train, y_train, model_name)
+            model_cv_list[i] = pd.DataFrame(model_cv.cv_results_)
+            hyperparams = model_cv.best_params_
+            hyperparams_list[i] = hyperparams
 
         for j, n in enumerate(num_samples_arr):
             print('{} out of {} sampling pts'.format(j+1, num_samples_arr.size))
@@ -84,7 +86,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             # each subsamples trained with the same (already chosen) hyperparameters
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
             if model_name == 'lasso':
-                model = Lasso(alpha=hyperparams['alpha']).fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = Lasso(alpha=hyperparams['alpha'], max_iter=5000, tol=1e-3).fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'ols':
                 model = LinearRegression().fit(X_train[samples_idx, :], y_train[samples_idx])
             elif model_name == 'ridge':
@@ -103,7 +105,6 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             pred = model.predict(X_test)
             y_mse[i, j] = np.sum(np.square(y_test - pred))
             y_pearson_r[i, j] = pearsonr(y_test, pred)[0]
-            y_r2[i, j] = r2_score(y_test, pred)
 
             # TODO: figure out how best to deal with intercept: the first element of beta corresponds to intercept
             # but `model.intercept_` is not in the same scale as sum(y) / sqrt(M)
@@ -112,8 +113,8 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             beta_mse[i, j] = np.sum(np.square(beta - beta_hat))
             beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
-    results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r, 'y_r2': y_r2,
-        'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list}
+    results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
+        'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
     return results_dict
@@ -121,21 +122,18 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
 
 def select_hyperparams(X_train, y_train, model_name, groups=None):
-    hyperparams = {}
-
     print('------------ running cv for {} with sample size {} -------------'.format(model_name, X_train.shape[0]))
     if model_name == 'lasso':
-        alphas_list = [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
-        model_cv = LassoCV(alphas=alphas_list, n_jobs=20, max_iter=5000, tol=1e-3, verbose=1).fit(X_train, y_train)
-        hyperparams['alpha'] = model_cv.alpha_
+        params_dict = {}
+        params_dict['alpha'] =  [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+        model = Lasso(max_iter=5000, tol=1e-3)
+        model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
+        model_cv.fit(X_train, y_train)
     elif model_name == 'ridge':
         model_cv = RidgeCV().fit(X_train, y_train)
-        hyperparams['alpha'] = model_cv.alpha_
     elif model_name == 'elastic_net':
         l1_ratio_list = [.1, .5, .7, .9, .95, .99, 1]
         model_cv = ElasticNetCV(l1_ratio=l1_ratio_list, alphas=alphas_list, n_jobs=10).fit(X_train, y_train)
-        hyperparams['alpha'] = model_cv.alpha_
-        hyperparams['l1_ratio'] = model_cv.l1_ratio_
     elif model_name == 'group_lasso':
         params_dict = {}
         params_dict['group_reg'] =  [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
@@ -143,8 +141,7 @@ def select_hyperparams(X_train, y_train, model_name, groups=None):
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=5000, tol=1e-3, warm_start=True)
         model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
-        hyperparams = model_cv.best_params_
-    return (hyperparams, model_cv)
+    return model_cv
 
 
 
