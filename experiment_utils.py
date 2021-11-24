@@ -71,6 +71,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     hyperparams_list = [None] * num_replicates
     model_cv_list = [None] * num_replicates
+    model_list = [None] * num_replicates
 
     for i in range(num_replicates):
         print('replicate: {}'.format(i+1))
@@ -118,8 +119,9 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             beta_mse[i, j] = np.sum(np.square(beta - beta_hat))
             beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
+            model_list[i] = model
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
-        'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
+            'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list, 'model_cv': model_cv_list, 'models': model_list}
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
     return results_dict
@@ -130,10 +132,10 @@ def select_hyperparams(X_train, y_train, model_name, params_dict, groups=None):
     print('------------ running cv for {} with sample size {} -------------'.format(model_name, X_train.shape[0]))
     if model_name == 'lasso':
         model = Lasso(max_iter=5000, tol=1e-3)
-        model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
+        model_cv = GridSearchCV(model, params_dict, n_jobs=-1, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
     elif model_name == 'group_lasso':
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=5000, tol=1e-3)
-        model_cv = GridSearchCV(model, params_dict, n_jobs=20, refit=False, verbose=1)
+        model_cv = GridSearchCV(model, params_dict, n_jobs=-1, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
     return model_cv
