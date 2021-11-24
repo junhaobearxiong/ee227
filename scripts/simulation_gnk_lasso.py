@@ -45,7 +45,7 @@ elif args.cv == 1:
     print('`cv == 1`, using a coarse grid for cross validation')
 elif args.cv == 2:
     if args.model_name == 'lasso':
-        pass
+        params_dict['alpha'] = 10**np.linspace(-7, -5, 20) 
     elif args.model_name == 'group_lasso':
         pass
     print('`cv == 2`, using a fine grid for cross validation')
