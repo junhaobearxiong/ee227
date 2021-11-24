@@ -71,7 +71,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     hyperparams_list = [None] * num_replicates
     model_cv_list = [None] * num_replicates
-    model_list = [None] * num_replicates
+    # model_list = [None] * num_replicates
 
     for i in range(num_replicates):
         print('replicate: {}'.format(i+1))
@@ -118,10 +118,10 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             beta_hat[0] = model.intercept_
             beta_mse[i, j] = np.sum(np.square(beta - beta_hat))
             beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
+            # model_list[i] = model
 
-            model_list[i] = model
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
-            'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list, 'model_cv': model_cv_list, 'models': model_list}
+            'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
     return results_dict
