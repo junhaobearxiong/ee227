@@ -5,11 +5,25 @@ import numpy as np
 from scipy.special import binom
 
 
+def plot_beta(ax, beta, group_idx, label, num_coeffs=500, width=8):
+    ymin = beta.min()
+    ymax = beta.max()
+    for idx in group_idx:
+        if idx > num_coeffs:
+            break
+        ax.vlines(x=idx, ymin=ymin, ymax=ymax, colors='r')
+    ax.bar(np.arange(num_coeffs), beta[:num_coeffs], width=width)
+    ax.tick_params(axis='x', labelsize=20)
+    ax.tick_params(axis='y', labelsize=20)
+    ax.set_ylabel(label, fontsize=20)
+    return ax
+
+
 def plot_neighborhoods(V, L, positions, label_rotation=0, s=120):
     """
     Plots a set of neighborhoods, as done in Figure 1 and Figure 4A.
     """
-    fig, ax = plt.subplots(figsize=(2, 2))
+    fig, ax = plt.subplots(figsize=(3, 3))
     colormap = sns.color_palette('crest', as_cmap=True)
     for j in range(L):
         y_ = [L-j-0.5 for _ in range(len(V[j]))]
