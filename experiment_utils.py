@@ -10,6 +10,46 @@ from collections import Counter
 from utils import *
 
 
+def gb1_read_Xy(Xfile=None, yfile=None)
+    if Xfile is None:
+        Xfile = 'data/gb1_X.pkl'
+    if yfile is None:
+        yfile = 'data/gb1_y.pkl'
+    with open(Xfile, 'rb') as f:
+        X = pickle.load(f)
+    with open(yfile, 'rb') as f:
+        y = pickle.load(f)
+    return X, y
+
+
+def gb1_construct_X(readfile=None, savefile=None):
+    # only need to run once
+    # process each variant sequence into an integer encoding
+    if readfile is None:
+        readfile = 'data/gb1_combined.csv'
+    gb1 = pd.read_csv(readfile, index_col=0)
+
+    # process each variant sequence into an integer encoding
+    char_arr = gb1['Variants'].apply(lambda x: [char for char in x]).values
+    alphabet = np.unique(np.concatenate(char_arr))
+
+    dictionary = {}
+    for i, a in enumerate(alphabet):
+        dictionary[a] = i
+
+    int_seqs = [None] * char_arr.size
+    for i, s in enumerate(char_arr):
+        seq = [dictionary[c] for c in s]
+        int_seqs[i] = seq
+
+    X = fourier_from_seqs(int_seqs, 20)
+
+    if savefile is None:
+        savefile = 'data/gb1_X.pkl'
+    with open(savefile, 'wb') as f
+        pickle.dump(X, f)
+
+
 def get_idx_by_epistasis_order(bin_seqs):
     # order the indices of binary sequences by the order of epistasis 
     # i.e. number of 1's in each sequence

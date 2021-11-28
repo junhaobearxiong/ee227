@@ -10,12 +10,10 @@ def plot_comparison(L, q, K, r, nmin, nmax, step, cv):
 
     for i, m in enumerate(models):
         if m == 'group_lasso':
-            cv = 1
-            r = 5
+            cv = 0
             label = 'Group Lasso: l1_reg=1e-4, group_reg=1e-4'
         elif m == 'lasso':
             cv = 2
-            r = 10
             label = 'Lasso: alpha=1e-6'
         filename = 'results/gnk_{}_L{}_q{}_Vrandom_K{}_r{}_n{}-{}s{}_cv{}'.format(m, L, q, K, r, nmin, nmax, step, cv)
         filename += '.pkl'
