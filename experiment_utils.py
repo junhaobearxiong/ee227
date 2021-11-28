@@ -10,7 +10,7 @@ from collections import Counter
 from utils import *
 
 
-def gb1_read_Xy(Xfile=None, yfile=None)
+def gb1_read_Xy(Xfile=None, yfile=None):
     if Xfile is None:
         Xfile = 'data/gb1_X.pkl'
     if yfile is None:
@@ -46,7 +46,7 @@ def gb1_construct_X(readfile=None, savefile=None):
 
     if savefile is None:
         savefile = 'data/gb1_X.pkl'
-    with open(savefile, 'wb') as f
+    with open(savefile, 'wb') as f:
         pickle.dump(X, f)
 
 

@@ -143,6 +143,8 @@ def fourier_from_seqs(int_seqs, qs):
     """
     Returns an N x M array containing the Fourier encodings of a given list of 
     N sequences with alphabet sizes qs.
+    TODO: if N = M, there should be a way to just shuffle the columns of output by `fourier_basis_recursive` 
+    to get the same output
     """
     if type(qs) == int:
         qs = [qs]*len(int_seqs[0])
