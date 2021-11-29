@@ -124,6 +124,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
         # each replicate has an independent train test split
         # the actual training set consists of subsamples from `(X_train, y_train)`
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_samples_arr.max())
+        X_train = np.asfortranarray(X_train)
         if cv > 0:
             model_cv = select_hyperparams(X_train, y_train, model_name, params_dict)
             model_cv_list[i] = pd.DataFrame(model_cv.cv_results_)
@@ -137,19 +138,22 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             # subsample n samples from the training set for actual training 
             # each subsamples trained with the same (already chosen) hyperparameters
             samples_idx = np.random.choice(np.arange(X_train.shape[0]), n, replace=False)
+            X_train_samples = X_train[samples_idx, :]
+            X_train_samples = np.asfortranarray(X_train_samples)
+            y_train_samples = y_train[samples_idx]
             if model_name == 'lasso':
-                model = Lasso(alpha=hyperparams['alpha'], max_iter=5000, tol=1e-3).fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = Lasso(alpha=hyperparams['alpha'], max_iter=5000, tol=1e-3).fit(X_train_samples, y_train_samples)
             elif model_name == 'ols':
-                model = LinearRegression().fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = LinearRegression().fit(X_train_samples, y_train_samples)
             elif model_name == 'ridge':
-                model = Ridge(alpha=hyperparams['alpha']).fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = Ridge(alpha=hyperparams['alpha']).fit(X_train_samples, y_train_samples)
             elif model_name == 'group_lasso':
                 if groups is None:
                     raise ValueError('`groups` cannot be `None` for group_lasso')
                 model = GroupLasso(groups=groups, group_reg=hyperparams['group_reg'], l1_reg=hyperparams['l1_reg'], supress_warning=True, n_iter=5000, tol=1e-3)
-                model.fit(X_train[samples_idx, :], y_train[samples_idx])
+                model.fit(X_train_samples, y_train_samples)
             elif model_name == 'elastic_net':
-                model = ElasticNet(alpha=hyperparams['alpha'], l1_ratio=hyperparams['l1_ratio']).fit(X_train[samples_idx, :], y_train[samples_idx])
+                model = ElasticNet(alpha=hyperparams['alpha'], l1_ratio=hyperparams['l1_ratio']).fit(X_train_samples, y_train_samples)
             else:
                 raise ValueError('model {} not implemented'.format(model_name))
             
