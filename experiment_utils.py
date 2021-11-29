@@ -10,44 +10,53 @@ from collections import Counter
 from utils import *
 
 
-def gb1_read_Xy(Xfile=None, yfile=None):
-    if Xfile is None:
-        Xfile = 'data/gb1_X.pkl'
-    if yfile is None:
-        yfile = 'data/gb1_y.pkl'
-    with open(Xfile, 'rb') as f:
-        X = pickle.load(f)
-    with open(yfile, 'rb') as f:
-        y = pickle.load(f)
-    return X, y
-
-
-def gb1_construct_X(readfile=None, savefile=None):
+def gb1_construct_Xy(data_dir=None, train_size=5000, test_size=2000):
     # only need to run once
-    # process each variant sequence into an integer encoding
-    if readfile is None:
-        readfile = 'data/gb1_combined.csv'
-    gb1 = pd.read_csv(readfile, index_col=0)
+    np.random.seed(0)
 
-    # process each variant sequence into an integer encoding
-    char_arr = gb1['Variants'].apply(lambda x: [char for char in x]).values
+    def str_seqs_to_char_list(str_seqs):
+        return str_seqs.apply(lambda x: [char for char in x]).values
+
+    def get_int_seqs(str_seqs, alphabet):
+        # process each variant sequence (pd series) into an integer encoding
+        char_arr = str_seqs_to_char_list(str_seqs)
+
+        dictionary = {}
+        for i, a in enumerate(alphabet):
+            dictionary[a] = i
+
+        int_seqs = [None] * char_arr.size
+        for i, s in enumerate(char_arr):
+            seq = [dictionary[c] for c in s]
+            int_seqs[i] = seq
+        return int_seqs
+
+    if data_dir is None:
+        data_dir = 'data/'
+    gb1 = pd.read_csv(data_dir + 'gb1.csv', index_col=0)
+    str_seqs = gb1['Variants']
+    char_arr = str_seqs_to_char_list(str_seqs)
     alphabet = np.unique(np.concatenate(char_arr))
 
-    dictionary = {}
-    for i, a in enumerate(alphabet):
-        dictionary[a] = i
+    sample_idx = np.random.choice(np.arange(gb1.shape[0]), train_size + test_size, replace=False)
+    train_sample_idx = sample_idx[:train_size]
+    test_sample_idx = sample_idx[train_size:]
+    y_train = gb1['Fitness'][train_sample_idx].values
+    y_test = gb1['Fitness'][test_sample_idx].values
 
-    int_seqs = [None] * char_arr.size
-    for i, s in enumerate(char_arr):
-        seq = [dictionary[c] for c in s]
-        int_seqs[i] = seq
+    train_seqs = get_int_seqs(gb1['Variants'][train_sample_idx], alphabet)
+    test_seqs = get_int_seqs(gb1['Variants'][test_sample_idx], alphabet)
+    X_train = fourier_from_seqs(train_seqs, 20)
+    X_test = fourier_from_seqs(test_seqs, 20)
 
-    X = fourier_from_seqs(int_seqs, 20)
-
-    if savefile is None:
-        savefile = 'data/gb1_X.pkl'
-    with open(savefile, 'wb') as f:
-        pickle.dump(X, f)
+    with open(data_dir + 'gb1_Xtrain_{}.pkl'.format(train_size), 'wb') as f:
+        pickle.dump(X_train, f)
+    with open(data_dir + 'gb1_ytrain_{}.pkl'.format(train_size), 'wb') as f:
+        pickle.dump(y_train, f)
+    with open(data_dir + 'gb1_Xtest_{}.pkl'.format(test_size), 'wb') as f:
+        pickle.dump(X_test, f)
+    with open(data_dir + 'gb1_ytest_{}.pkl'.format(test_size), 'wb') as f:
+        pickle.dump(y_test, f)
 
 
 def get_idx_by_epistasis_order(bin_seqs):
@@ -101,14 +110,11 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
         if `cv == 0`, then `params_dict` should provide the hyperparameter used in training, no cross validation is performed
     """
     print('------------{} for max number of samples: {}, number of replicates: {}-----------'.format(model_name, num_samples_arr.max(), num_replicates))
-    if beta is None:
-        beta = X @ y # true WHT
-        print('------------- true beta is computed by X dot y ---------------------')
+    if beta != None:
+        beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     # metrics to return
     y_mse = np.zeros((num_replicates, num_samples_arr.size))
     y_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
-    beta_mse = np.zeros((num_replicates, num_samples_arr.size))
-    beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     hyperparams_list = [None] * num_replicates
     model_cv_list = [None] * num_replicates
     # model_list = [None] * num_replicates
@@ -152,16 +158,18 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             y_mse[i, j] = np.sum(np.square(y_test - pred))
             y_pearson_r[i, j] = pearsonr(y_test, pred)[0]
 
-            # TODO: figure out how best to deal with intercept: the first element of beta corresponds to intercept
-            # but `model.intercept_` is not in the same scale as sum(y) / sqrt(M)
-            beta_hat = model.coef_
-            beta_hat[0] = model.intercept_
-            beta_mse[i, j] = np.sum(np.square(beta - beta_hat))
-            beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
-            # model_list[i] = model
+            if beta != None:
+                # TODO: figure out how best to deal with intercept: the first element of beta corresponds to intercept
+                # but `model.intercept_` is not in the same scale as sum(y) / sqrt(M)
+                beta_hat = model.coef_
+                beta_hat[0] = model.intercept_
+                beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
-            'beta_mse': beta_mse, 'beta_pearson_r': beta_pearson_r, 'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
+            'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
+    if beta != None:
+        results_dict['beta_pearson_r'] = beta_pearson_r, 
+
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
     return results_dict

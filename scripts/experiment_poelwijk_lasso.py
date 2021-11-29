@@ -16,6 +16,7 @@ X, y = poelwijk_construct_Xy()
 num_samples_arr = np.arange(100, args.max_num_samples, args.num_samples_step)
 run_model_across_sample_sizes(
     X, y,
+    beta= X @ y,
     model_name=args.model,
     num_samples_arr=num_samples_arr,
     num_replicates=args.num_replicates,
