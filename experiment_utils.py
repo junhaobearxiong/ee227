@@ -110,7 +110,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
         if `cv == 0`, then `params_dict` should provide the hyperparameter used in training, no cross validation is performed
     """
     print('------------{} for max number of samples: {}, number of replicates: {}-----------'.format(model_name, num_samples_arr.max(), num_replicates))
-    if beta != None:
+    if beta is not None:
         beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
     # metrics to return
     y_mse = np.zeros((num_replicates, num_samples_arr.size))
@@ -162,7 +162,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
             y_mse[i, j] = np.sum(np.square(y_test - pred))
             y_pearson_r[i, j] = pearsonr(y_test, pred)[0]
 
-            if beta != None:
+            if beta is not None:
                 # TODO: figure out how best to deal with intercept: the first element of beta corresponds to intercept
                 # but `model.intercept_` is not in the same scale as sum(y) / sqrt(M)
                 beta_hat = model.coef_
@@ -171,7 +171,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
             'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
-    if beta != None:
+    if beta is not None:
         results_dict['beta_pearson_r'] = beta_pearson_r, 
 
     with open(savefile, 'wb') as f:

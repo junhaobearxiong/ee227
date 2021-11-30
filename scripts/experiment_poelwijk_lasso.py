@@ -47,7 +47,7 @@ print('-----------results will be saved at: {}-------------------'.format(savefi
 run_model_across_sample_sizes(
     X, y,
     beta= X @ y,
-    model_name=args.model,
+    model_name=args.model_name,
     num_samples_arr=num_samples_arr,
     num_replicates=args.num_replicates,
     savefile=savefile,
