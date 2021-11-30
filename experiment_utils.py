@@ -112,6 +112,8 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     print('------------{} for max number of samples: {}, number of replicates: {}-----------'.format(model_name, num_samples_arr.max(), num_replicates))
     if beta is not None:
         beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
+        if ignore_intercept:
+            beta = beta[1:]
     # metrics to return
     y_mse = np.zeros((num_replicates, num_samples_arr.size))
     y_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
@@ -168,10 +170,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
                 beta_hat = model.coef_
                 beta_hat[0] = model.intercept_
                 if ignore_intercept:
-                    beta = beta[1:]
                     beta_hat = beta_hat[1:]
-                    print('beta: {}'.format(beta.shape))
-                    print('beta hat: {}'.format(beta_hat.shape))
                 beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
