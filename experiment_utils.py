@@ -102,7 +102,7 @@ def poelwijk_construct_Xy(readfile=None):
 
 
 def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, num_replicates=1, 
-    beta=None, cv=1, params_dict=None, groups=None):
+    beta=None, cv=1, params_dict=None, groups=None, ignore_intercept=False):
     """
     num_replicates: number of replicates of model to train on a given number of samples
     cv: whether to select hyperparams by cross validation with the function `select_hyperparams`
@@ -167,12 +167,15 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
                 # but `model.intercept_` is not in the same scale as sum(y) / sqrt(M)
                 beta_hat = model.coef_
                 beta_hat[0] = model.intercept_
+                if ignore_intercept:
+                    beta = beta[1:]
+                    beta_hat = beta_hat[1:]
                 beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
             'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
     if beta is not None:
-        results_dict['beta_pearson_r'] = beta_pearson_r, 
+        results_dict['beta_pearson_r'] = beta_pearson_r
 
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
