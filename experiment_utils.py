@@ -168,8 +168,10 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
                 beta_hat = model.coef_
                 beta_hat[0] = model.intercept_
                 if ignore_intercept:
-                    beta = beta.flatten()[1:]
-                    beta_hat = beta_hat.flatten()[1:]
+                    beta = beta[1:]
+                    beta_hat = beta_hat[1:]
+                    print('beta: {}'.format(beta.shape))
+                    print('beta hat: {}'.format(beta_hat.shape))
                 beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,

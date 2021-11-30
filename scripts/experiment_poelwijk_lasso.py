@@ -37,7 +37,7 @@ else:
     raise ValueError('cv == {} is not valid'.format(args.cv))
 
 X, y = poelwijk_construct_Xy()
-num_samples_arr = np.arange(args.min_num_samples, args.max_num_samples, args.num_samples_step)
+num_samples_arr = np.arange(args.min_num_samples, args.max_num_samples + 1, args.num_samples_step)
 savefile = 'results/poelwijk_{}_r{}_n{}-{}_s{}_cv{}.pkl'.format(args.model_name, args.num_replicates, args.min_num_samples, 
     args.max_num_samples, args.num_samples_step, args.cv)
 print('-----------results will be saved at: {}-------------------'.format(savefile))
