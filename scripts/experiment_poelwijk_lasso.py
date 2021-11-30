@@ -42,7 +42,7 @@ X, y = poelwijk_construct_Xy()
 num_samples_arr = np.arange(args.min_num_samples, args.max_num_samples, args.num_samples_step)
 savefile = 'results/poelwijk_{}_r{}_n{}-{}_s{}_cv{}.pkl'.format(args.model_name, args.num_replicates, args.min_num_samples, 
     args.max_num_samples, args.num_samples_step, args.cv)
-print('-----------results will be saved at: {}-------------------'.format(savefile))l
+print('-----------results will be saved at: {}-------------------'.format(savefile))
 
 run_model_across_sample_sizes(
     X, y,
