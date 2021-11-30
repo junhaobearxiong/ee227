@@ -28,6 +28,8 @@ elif args.cv == 1:
     elif args.model_name == 'group_lasso':
         params_dict['group_reg'] = [1e-5, 1e-4, 1e-3, 1e-2] # [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
         params_dict['l1_reg'] = [1e-5, 1e-4, 1e-3, 1e-2] # [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+    elif args.model_name == 'ridge':
+        params_dict['alpha'] = [1e-8, 1e-6, 1e-4, 1e-2, 1, 1e1, 1e2, 1e3]
     print('`cv == 1`, using a coarse grid for cross validation')
 elif args.cv == 2:
     if args.model_name == 'lasso':
