@@ -50,7 +50,7 @@ with open(args.data_dir + 'gb1_ytrain_{}.pkl'.format(args.train_size), 'rb') as 
 num_samples_arr = np.arange(args.min_num_samples, args.max_num_samples + 1, args.num_samples_step)
 savefile = 'results/gb1_{}_{}_r{}_n{}-{}_s{}_cv{}.pkl'.format(args.train_size, args.model_name, args.num_replicates, args.min_num_samples, args.max_num_samples, 
         args.num_samples_step, args.cv)
-print('-----------results will be saved at: {}-------------------'.format(savefile))
+print('-----------results will be saved at: {}-------------------'.format(savefile))l
 
 results = run_model_across_sample_sizes(X, y,
     beta=None,
@@ -58,6 +58,7 @@ results = run_model_across_sample_sizes(X, y,
     num_samples_arr=num_samples_arr,
     num_replicates=args.num_replicates,
     savefile=savefile,
-    params_dict=params_dict
+    params_dict=params_dict,
+    cv=args.cv
 )
 print('Time elapsed: {}'.format(datetime.now() - start_time))

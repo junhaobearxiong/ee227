@@ -190,4 +190,6 @@ def select_hyperparams(X_train, y_train, model_name, params_dict, groups=None):
         model = GroupLasso(groups=groups, supress_warning=True, n_iter=5000, tol=1e-3)
         model_cv = GridSearchCV(model, params_dict, n_jobs=1, refit=False, verbose=1)
         model_cv.fit(X_train, y_train)
+    elif model_name == 'ridge':
+        pass
     return model_cv
