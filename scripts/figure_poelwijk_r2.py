@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import pickle
 
-fontsize = 15
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, axs = plt.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
 models = ['lasso', 'ridge', 'ols']
 r = 10
 nmin = 50
@@ -41,5 +40,5 @@ axs[0].legend()
 axs[0].grid()
 axs[1].grid()
 
-plt.suptitle('Prediction R-Square on Poelwijk el al.', fontsize=fontsize)
+plt.suptitle('Prediction R-Square on Poelwijk el al.')
 plt.savefig('figures/poelwijk_r2.png')

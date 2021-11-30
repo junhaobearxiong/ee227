@@ -112,6 +112,7 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
     print('------------{} for max number of samples: {}, number of replicates: {}-----------'.format(model_name, num_samples_arr.max(), num_replicates))
     if beta is not None:
         beta_pearson_r = np.zeros((num_replicates, num_samples_arr.size))
+        beta_mse = np.zeros((num_replicates, num_samples_arr.size))
         if ignore_intercept:
             beta = beta[1:]
     # metrics to return
@@ -171,12 +172,14 @@ def run_model_across_sample_sizes(X, y, model_name, num_samples_arr, savefile, n
                 beta_hat[0] = model.intercept_
                 if ignore_intercept:
                     beta_hat = beta_hat[1:]
+                beta_mse[i, j] = np.sum(np.square(beta - beta_hat))
                 beta_pearson_r[i, j] = pearsonr(beta, beta_hat)[0]
 
     results_dict = {'num_samples': num_samples_arr, 'y_mse': y_mse, 'y_pearson_r': y_pearson_r,
             'hyperparams': hyperparams_list, 'model_cv': model_cv_list}
     if beta is not None:
         results_dict['beta_pearson_r'] = beta_pearson_r
+        results_dict['beta_mse'] = beta_mse
 
     with open(savefile, 'wb') as f:
         pickle.dump(results_dict, f)
