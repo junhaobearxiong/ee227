@@ -1,12 +1,14 @@
 import matplotlib.pyplot as plt
 import pickle
 
-fig, axs = plt.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
+fig, axs = plt.subplots(figsize=(12, 8), sharex=True, sharey=True)
 models = ['lasso', 'ridge', 'ols']
 r = 10
 nmin = 50
 nmax = 2000
 step = 100
+title_fontsize = 30
+ticks_fontsize = 20
 
 for i, m in enumerate(models):
     if m == 'lasso':
@@ -31,14 +33,17 @@ for i, m in enumerate(models):
     beta_mean = beta.mean(axis=0)
     beta_std = beta.std(axis=0)
 
-    axs[0].errorbar(ns, y_mean, yerr=y_std, marker='o', label=label)
-    axs[0].set_xlabel('Number of Training Samples')
-    axs[0].set_ylabel('Predicted Fitness R^2')
-    axs[1].errorbar(ns, beta_mean, yerr=beta_std, marker='o', label=label)
-    axs[1].set_ylabel('Predicted Coeffcients R^2')
-axs[0].legend()
-axs[0].grid()
-axs[1].grid()
+    axs.errorbar(ns, y_mean, yerr=y_std, marker='o', label=label)
+    axs.set_xlabel('Number of Training Samples', fontsize=ticks_fontsize)
+    axs.set_ylabel('Predicted Fitness R^2', fontsize=ticks_fontsize)
+    # axs[1].errorbar(ns, beta_mean, yerr=beta_std, marker='o', label=label)
+    # axs[1].set_ylabel('Predicted Coeffcients R^2')
+axs.legend(fontsize=ticks_fontsize)
+axs.grid()
+# axs[1].grid()
 
-plt.suptitle('Prediction R-Square on Poelwijk el al.')
+plt.xticks(fontsize=ticks_fontsize)
+plt.yticks(fontsize=ticks_fontsize)
+plt.suptitle('Prediction R-Square on Poelwijk el al.', fontsize=title_fontsize)
+plt.tight_layout()
 plt.savefig('figures/poelwijk_r2.png')

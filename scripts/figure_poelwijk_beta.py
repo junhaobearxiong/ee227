@@ -16,7 +16,10 @@ betahat[0] = model.intercept_
 betahat = betahat[idx_epi_ord]
 beta = X @ y
 beta = beta[idx_epi_ord]
+beta = beta[1:]
+betahat = betahat[1:]
 
-ax = plot_beta_comparison(beta, betahat)
-ax.set_title('True vs. Predicted Fourier Coefficient on Poelwijk el al. ({} Samples)'.format(n), fontsize=20)
+ax = plot_beta_comparison(beta, betahat, max_order=4, width=3)
+plt.title('True vs. Predicted Fourier Coefficient on Poelwijk el al. ({} Training Samples)'.format(n), fontsize=40)
+plt.tight_layout()
 plt.savefig('figures/poelwijk_beta_n{}.png'.format(n))

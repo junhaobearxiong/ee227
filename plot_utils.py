@@ -52,7 +52,7 @@ def plot_neighborhoods(V, L, positions, label_rotation=0, s=120):
     return ax
 
 
-def plot_beta_comparison(beta, betahat, L=13, max_order=5):
+def plot_beta_comparison(beta, betahat, L=13, max_order=5, width=3):
     """
     Plot comparison between true (`beta`) and predicted (`betahat`) epistasis coeffcients
     Assumed beta and betahat are sorted by epistatic orders
@@ -63,28 +63,32 @@ def plot_beta_comparison(beta, betahat, L=13, max_order=5):
 
     # these parameters are set manually according to figure size
     use_order_labels = True
-    order_label_fontsize=20
+    order_label_fontsize=35
     order_lbl_offset=25, 
     order_lbl_height=20
-    arrow1_xy=(7, 25)
-    arrow1_text_xy=(52, 30)
-    arrow2_xy=(35, 35)
-    arrow2_text_xy=(83, 40) 
-    yticks=(-40, -20, 0, 20, 40)
-    yticklabels=('40', '20', '0', '20', '40')
+    arrow1_xy=(8, 20)
+    arrow1_text_xy=(55, 25)
+    arrow2_xy=(80, 20)
+    arrow2_text_xy=(130, 25) 
+    yticks=(-30, -15, 0, 15, 30)
+    yticklabels=('30', '15', '0', '15', '30')
 
     num_coeffs = int(np.sum([binom(L, i) for i in range(max_order+1)])) # up to 5th order interactions
+    num_coeffs -= 1 # since we removed intercept from betas
     colors = sns.color_palette('Set1', n_colors=2)
     mv = np.max([np.max(beta), np.max(betahat)])
 
-    ax.bar(range(num_coeffs), beta[:num_coeffs], width=3, color=colors[0], label='True')
-    ax.bar(range(num_coeffs), -betahat[:num_coeffs], width=3, color=colors[1], label='Predicted')
+    ax.bar(range(num_coeffs), beta[:num_coeffs], width=width, color=colors[0], label='True')
+    ax.bar(range(num_coeffs), -betahat[:num_coeffs], width=width, color=colors[1], label='Predicted')
 
     ax.plot((-10, num_coeffs),(0, 0), c='k')
     ticks = [np.sum([binom(L, j) for j in range(i)]) for i in range(L+1)]
     ticks = [t for t in ticks if t <= num_coeffs]
     ordlbls = ["1st", "2nd", "3rd"] + ["%ith" for i in range(3, L+1)]
     for i, tick in enumerate(ticks):
+        if i == 0:
+            continue
+        tick -= 1 # since we removed intercept from betas
         ax.vlines(tick, ymin=-mv, ymax=mv, color='k', ls='--', lw=0.5, alpha=1)
         if i > 2 and i <= max_order:
             if use_order_labels:
