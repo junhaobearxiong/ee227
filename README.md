@@ -1,0 +1,3 @@
+Code Descriptions 
+* `utils.py` and `experiment_utils.py` contain the code for most of the workhorses of the experiments, including computing Walsh-Hadamard / Fourier basis, selecting hyperparameters via grid search cross validation, running LASSO, group LASSO and other models across various sample sizes, etc. 
+* Files under `scripts/` can be run to produces the results of experiments on the Poelwijk dataset and GNK model simulation, and the corresponding figures. 
